@@ -1,0 +1,6 @@
+[package]
+name = "cubesnake_rust"
+version = "0.1.0"
+authors = ["Sven Herrmann <sven.herrmann@posteo.de>"]
+
+[dependencies]
