@@ -8,12 +8,16 @@ pub mod chain {
     }
 
     pub struct Chain {
-        dirs: Vec<Form>
+        pub dirs: Vec<Form>
     }
 
     impl Chain {
         pub fn new() -> Chain {
             Chain { dirs: Vec::new() }
+        }
+
+        pub fn copy(&self) -> Chain {
+            Chain { dirs: self.dirs.to_vec() }
         }
 
         pub fn add(&mut self, form: Form) {
@@ -39,7 +43,7 @@ pub mod brick {
 
     pub type Position = [i8; 3];
 
-    #[derive(Copy, Clone, Debug)]
+    #[derive(Copy, Clone, Debug, PartialEq)]
     pub enum Orientation {
         North,
         South,
@@ -82,7 +86,21 @@ pub mod brick {
             }
         }
 
+        pub fn next_turn_orientation(&self, ori: &Orientation) -> Brick {
+            let mut coord = self.coordinates.clone();
+            match self.orientation {
+                Orientation::North => coord[0] += 1,
+                Orientation::South => coord[0] -= 1,
+                Orientation::East  => coord[1] += 1,
+                Orientation::West  => coord[1] -= 1,
+                Orientation::Up    => coord[2] += 1,
+                Orientation::Down  => coord[2] -= 1
+            }
+            Brick { orientation: ori.clone(), coordinates: coord, form: Form::Turn }
+        }
+
         pub fn next_turn(&self) -> [Brick; 4] {
+            // FIXME: use next_turn_orientation in here!
             let mut coord = self.coordinates.clone();
             match self.orientation {
                 Orientation::North => coord[0] += 1,

@@ -2,6 +2,7 @@ mod tree;
 mod snake;
 mod area;
 mod path;
+mod parser;
 
 use std::rc::Rc;
 
