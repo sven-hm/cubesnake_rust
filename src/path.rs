@@ -199,7 +199,11 @@ pub mod path {
             let mut output = "coords   form orientation\n".to_string();
             for nr in &self.last_layer {
                 for rr in TreeIterator::new(Rc::clone(&nr)) {
-                    let mut line = format!("{:?}  ", rr.value.coordinates);
+                    let mut line = format!("[{}, {}, {}]  ",
+                        rr.value.coordinates.x,
+                        rr.value.coordinates.y,
+                        rr.value.coordinates.z,
+                        );
                     line.push_str(match rr.value.form {
                         Form::Straight => "S",
                         Form::Turn => "T"
@@ -216,6 +220,7 @@ pub mod path {
                     line.push_str("\n");
                     output.push_str(&line);
                 }
+                output.push_str("------------------\n");
             }
             output
         }
