@@ -39,9 +39,47 @@ pub mod chain {
 }
 
 pub mod brick {
+    use std::ops;
     use super::chain::Form;
 
-    pub type Position = [i8; 3];
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub struct Position {
+        pub x: i8,
+        pub y: i8,
+        pub z: i8
+    }
+
+    impl ops::Add<Orientation> for Position {
+        type Output = Position;
+
+        fn add(self, rhs: Orientation) -> Position {
+            match rhs {
+                Orientation::North => Position::new(self.x + 1, self.y, self.z),
+                Orientation::South => Position::new(self.x - 1, self.y, self.z),
+                Orientation::East  => Position::new(self.x, self.y + 1, self.z),
+                Orientation::West  => Position::new(self.x, self.y - 1, self.z),
+                Orientation::Up    => Position::new(self.x, self.y, self.z + 1),
+                Orientation::Down  => Position::new(self.x, self.y, self.z - 1),
+            }
+        }
+    }
+
+    impl Position {
+        pub fn new(x: i8, y: i8, z: i8) -> Position {
+            Position { x: x, y: y, z: z }
+        }
+
+        pub fn neighbours(self) -> [Position; 6] {
+            [
+                self + Orientation::North,
+                self + Orientation::South,
+                self + Orientation::East,
+                self + Orientation::West,
+                self + Orientation::Up,
+                self + Orientation::Down
+            ]
+        }
+    }
 
     #[derive(Copy, Clone, Debug, PartialEq)]
     pub enum Orientation {
@@ -70,46 +108,24 @@ pub mod brick {
         }
 
         pub fn next_straight(&self) -> Brick {
-            let mut coord = self.coordinates.clone();
-            match self.orientation {
-                Orientation::North => coord[0] += 1,
-                Orientation::South => coord[0] -= 1,
-                Orientation::East  => coord[1] += 1,
-                Orientation::West  => coord[1] -= 1,
-                Orientation::Up    => coord[2] += 1,
-                Orientation::Down  => coord[2] -= 1
-            }
             Brick {
                 orientation: self.orientation.clone(),
-                coordinates: coord,
+                coordinates: self.coordinates.clone() + self.orientation,
                 form: Form::Straight
             }
         }
 
         pub fn next_turn_orientation(&self, ori: &Orientation) -> Brick {
-            let mut coord = self.coordinates.clone();
-            match self.orientation {
-                Orientation::North => coord[0] += 1,
-                Orientation::South => coord[0] -= 1,
-                Orientation::East  => coord[1] += 1,
-                Orientation::West  => coord[1] -= 1,
-                Orientation::Up    => coord[2] += 1,
-                Orientation::Down  => coord[2] -= 1
+            Brick {
+                orientation: ori.clone(),
+                coordinates: self.coordinates.clone() + self.orientation,
+                form: Form::Turn
             }
-            Brick { orientation: ori.clone(), coordinates: coord, form: Form::Turn }
         }
 
         pub fn next_turn(&self) -> [Brick; 4] {
             // FIXME: use next_turn_orientation in here!
-            let mut coord = self.coordinates.clone();
-            match self.orientation {
-                Orientation::North => coord[0] += 1,
-                Orientation::South => coord[0] -= 1,
-                Orientation::East  => coord[1] += 1,
-                Orientation::West  => coord[1] -= 1,
-                Orientation::Up    => coord[2] += 1,
-                Orientation::Down  => coord[2] -= 1
-            }
+            let coord = self.coordinates.clone() + self.orientation;
 
             let (or0, or1, or2, or3) = match self.orientation {
                 Orientation::North | Orientation::South => {
@@ -165,12 +181,12 @@ mod tests {
 
     #[test]
     fn test_brick() {
-        let _brk = Brick::new([0,0,0], Orientation::North, Form::Straight);
-        let _brk = Brick::new([0,0,0], Orientation::South, Form::Straight);
-        let _brk = Brick::new([0,0,0], Orientation::East, Form::Straight);
-        let _brk = Brick::new([0,0,0], Orientation::West, Form::Straight);
-        let _brk = Brick::new([0,0,0], Orientation::Up, Form::Straight);
-        let brk = Brick::new([0,0,0], Orientation::Down, Form::Straight);
-        assert_eq!(0, brk.coordinates[0]);
+        let _brk = Brick::new(Position::new(0, 0, 0), Orientation::North, Form::Straight);
+        let _brk = Brick::new(Position::new(0, 0, 0), Orientation::South, Form::Straight);
+        let _brk = Brick::new(Position::new(0, 0, 0), Orientation::East, Form::Straight);
+        let _brk = Brick::new(Position::new(0, 0, 0), Orientation::West, Form::Straight);
+        let _brk = Brick::new(Position::new(0, 0, 0), Orientation::Up, Form::Straight);
+        let brk  = Brick::new(Position::new(0, 0, 0), Orientation::Down, Form::Straight);
+        assert_eq!(0, brk.coordinates.x);
     }
 }

@@ -8,8 +8,14 @@ pub mod parser {
 
     fn in_cube3(pos: Position) -> bool {
         let dim = 3;
-        pos[0] >= 0 && pos[1] >= 0 && pos[2] >= 0 &&
-            pos[0] < dim  && pos[1] < dim  && pos[2] < dim
+        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 &&
+            pos.x < dim  && pos.y < dim  && pos.z < dim
+    }
+
+    fn in_cube4(pos: Position) -> bool {
+        let dim = 4;
+        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 &&
+            pos.x < dim  && pos.y < dim  && pos.z < dim
     }
 
     pub struct Parser {
@@ -22,7 +28,7 @@ pub mod parser {
             let mut area = Area::new();
             let mut chain = Chain::new();
             let mut orientations: Vec<Orientation> = Vec::new();
-            let mut startbrick: [i8; 3] = [0, 0, 0];
+            let mut startbrick = Position::new(0, 0, 0);
 
             for line in input.lines() {
                 let lv: Vec<&str> = line.trim_start().split_whitespace().collect();
@@ -35,8 +41,12 @@ pub mod parser {
                             continue;
                         }
                         // FIXME: check dim
-                        let _dim: i8 = lv[2].parse().expect("parse error");
-                        area.conditions.push(in_cube3);
+                        match lv[2].parse().expect("parse error") {
+                            3 => area.conditions.push(in_cube3),
+                            4 => area.conditions.push(in_cube4),
+                            _ => continue
+                        }
+
                     },
                     "chain" => {
                         // build chain
@@ -63,11 +73,11 @@ pub mod parser {
                         }
                     },
                     "start" => {
-                        startbrick = [
-                            lv[1].parse().expect("parser error"),
-                            lv[2].parse().expect("parser error"),
-                            lv[3].parse().expect("parser error")
-                        ];
+                        startbrick = Position {
+                            x: lv[1].parse().expect("parser error"),
+                            y: lv[2].parse().expect("parser error"),
+                            z: lv[3].parse().expect("parser error")
+                        };
                     },
                     _ => {
                         // ignore for now
@@ -92,7 +102,7 @@ pub mod parser {
                 if coord.len() != 3 {
                     continue;
                 }
-                startbrick = [coord[0], coord[1], coord[2]];
+                startbrick = Position::new(coord[0], coord[1], coord[2]);
             }
 
             // keep copy of chain to be able to iterate on forms later
@@ -144,10 +154,12 @@ pub mod parser {
         pub fn output(&self) -> String {
             let mut outputstring = self.inputstring.to_string();
             outputstring.push_str(&"=========================\n".to_string());
-            outputstring.push_str(&self.path.solution_string_long());
-            outputstring.push_str(&"-------------------------\n".to_string());
-            outputstring.push_str(&self.path.solution_string_short());
-            outputstring.push_str(&"-------------------------\n".to_string());
+            if self.path.last_layer.len() < 10 {
+                outputstring.push_str(&self.path.solution_string_long());
+                outputstring.push_str(&"-------------------------\n".to_string());
+                outputstring.push_str(&self.path.solution_string_short());
+                outputstring.push_str(&"-------------------------\n".to_string());
+            }
             outputstring.push_str(&self.path.solution_string_statistics());
             outputstring
         }
@@ -168,7 +180,7 @@ start 0 0 0
         let mut parser = Parser::new(&input);
         // inspect...
         parser.path.print_solution();
-        assert_eq!(1, parser.path.fold());
+        assert_eq!(1, parser.path.fold(true));
         println!("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         println!("{}", parser.output());
     }

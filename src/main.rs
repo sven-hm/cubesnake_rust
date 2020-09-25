@@ -21,7 +21,7 @@ fn main() -> Result<()> {
         // read file 
         let mut prsr = Parser::new(&contents);
 
-        prsr.path.fold();
+        prsr.path.fold(true);
 
         File::create(&args[2])?.write_all(prsr.output().as_bytes())?;
         //println!("{}", prsr.output());

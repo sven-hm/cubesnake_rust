@@ -32,12 +32,12 @@ mod tests {
     #[test]
     fn test_area() {
         let mut area = Area::new();
-        area.conditions.push(|pos| { pos[0] > 0 });
-        area.conditions.push(|pos| { pos[0] < 3 });
+        area.conditions.push(|pos| { pos.x > 0 });
+        area.conditions.push(|pos| { pos.x < 3 });
 
-        let a: Position = [1,2,3];
-        let b: Position = [-1,2,3];
-        let c: Position = [3,2,3];
+        let a = Position::new(1, 2, 3);
+        let b = Position::new(-1,2, 3);
+        let c = Position::new(3, 2, 3);
         assert!(area.is_in(a));
         assert!(!area.is_in(b));
         assert!(!area.is_in(c));

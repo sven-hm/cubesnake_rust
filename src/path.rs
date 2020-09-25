@@ -11,7 +11,7 @@ pub mod path {
         pub area: Area,
         pub chain: Chain,
 
-        last_layer: Vec<Rc<Node<Brick>>>,
+        pub last_layer: Vec<Rc<Node<Brick>>>,
         last_layer_index: usize,
 
         pub statistics: Vec<(usize, usize)>
@@ -45,7 +45,7 @@ pub mod path {
             self.last_layer_index += 1;
         }
 
-        pub fn fold(&mut self) -> usize {
+        pub fn fold(&mut self, verbose: bool) -> usize {
             let mut lsize = 0;
             for ii in self.last_layer_index..self.chain.len() {
                 match self.chain.get(ii) {
@@ -58,29 +58,108 @@ pub mod path {
                         break;
                     }
                 }
+                if verbose {
+                    let (layer, nsol) = self.statistics.last().unwrap();
+                    println!("{} -> {}", layer, nsol);
+                }
+                if lsize > 10000000 {
+                    break;
+                }
             }
             lsize
         }
 
-        fn self_intersect(newbrick: Brick, node: Rc<Node<Brick>>) -> bool {
+        fn self_intersect(coords: Position, node: Rc<Node<Brick>>) -> bool {
             for rr in TreeIterator::new(Rc::clone(&node)) {
-                if rr.value.coordinates == newbrick.coordinates {
+                if rr.value.coordinates == coords {
                     return true;
                 }
             }
             false
         }
 
+        #[inline]
+        fn valid(path: &Path, coords: Position, nr: &Rc<Node<Brick>>) -> bool {
+            path.area.is_in(coords)
+                && !Path::self_intersect(coords, Rc::clone(nr))
+        }
+
+        /*
+         * checks if area is splitted by new position
+         */
+        fn split_area(path: &Path, coords: Position, node: &Rc<Node<Brick>>) -> bool {
+            // pick first valid neighbour
+            let mut fnb: Option<Position> = None;
+            for nb in &coords.neighbours() {
+                if Path::valid(path, *nb, node) {
+                    fnb = Some(*nb);
+                    break;
+                }
+            }
+            let fnb = match fnb {
+                None => {
+                    return false;
+                }
+                Some(fnb) => {
+                    fnb
+                }
+            };
+            let mut complement: Vec<Position> = Vec::new();
+            Path::build_complement(&mut complement, fnb, path, node);
+            //println!("---------------");
+            //println!("chain len:      {}", path.chain.dirs.len());
+            //println!("layer index:    {}", path.last_layer_index);
+            //println!("complement len: {}", complement.len());
+            //println!("---------------");
+            //println!("{} > {}", path.chain.dirs.len() - (path.last_layer_index + 2), complement.len());
+            path.chain.dirs.len() - path.last_layer_index > complement.len()
+            //false
+        }
+
+        fn build_complement(
+                complement: &mut Vec<Position>,
+                pos: Position,
+                path: &Path,
+                node: &Rc<Node<Brick>>
+                ) -> () {
+            if complement.len() > 100 {
+                return;
+            }
+            // if pos in complement-> return
+            for np in complement.iter() {
+                if *np == pos {
+                    return;
+                }
+            }
+            if Path::valid(path, pos, node) {
+                complement.push(pos);
+                for nb in &pos.neighbours() {
+                    Path::build_complement(complement, *nb, path, node);
+                }
+            }
+            
+        }
+
+        /*
+         * FIXME: can't i use self here?
+         */
+        #[inline]
+        fn valid_nosplit(path: &Path, coords: Position, nr: &Rc<Node<Brick>>) -> bool {
+            path.area.is_in(coords)
+                && !Path::self_intersect(coords, Rc::clone(nr))
+                && !Path::split_area(path, coords, nr)
+        }
+
         fn build_next_layer(&mut self, frm: Form) -> usize {
             let mut new_layer: Vec<Rc<Node<Brick>>> = Vec::new();
 
             // iterate on last_layer
+            // XXX DRY :/
             for nr in &self.last_layer {
                 match frm {
                     Form::Straight => {
                         let new_brick = (*nr).value.next_straight();
-                        if self.area.is_in(new_brick.coordinates)
-                                && !Path::self_intersect(new_brick, Rc::clone(nr)) {
+                        if Path::valid_nosplit(self, new_brick.coordinates, nr) {
                             new_layer.push(Rc::new(
                                     Node::<Brick> {
                                         father: Some(Rc::clone(nr)),
@@ -90,8 +169,7 @@ pub mod path {
                     },
                     Form::Turn => {
                         for new_brick in &(*nr).value.next_turn() {
-                            if self.area.is_in(new_brick.coordinates)
-                                    && !Path::self_intersect(*new_brick, Rc::clone(nr)) {
+                            if Path::valid_nosplit(self, new_brick.coordinates, nr) {
                                 new_layer.push(Rc::new(
                                         Node::<Brick> {
                                             father: Some(Rc::clone(nr)),
@@ -103,26 +181,12 @@ pub mod path {
                 }
             }
             swap(&mut self.last_layer, &mut new_layer);
+            self.last_layer_index += 1;
 
             //println!("==================");
             //self.print_layer();
 
             self.last_layer.len()
-        }
-
-        pub fn print_layer(&self) {
-            for nr in &self.last_layer {
-                println!("{:?}", (*nr).value);
-            }
-        }
-
-        pub fn print_solution(&self) {
-            for nr in &self.last_layer {
-                println!("++++++++++++++++++++++++++++++++++++++++++++");
-                for rr in TreeIterator::new(Rc::clone(&nr)) {
-                    println!("{:?}", rr.value);
-                }
-            }
         }
 
         pub fn solution_string_long(&self) -> String {
@@ -182,6 +246,23 @@ pub mod path {
             }
             output
         }
+
+        #[cfg(test)]
+        pub fn print_layer(&self) {
+            for nr in &self.last_layer {
+                println!("{:?}", (*nr).value);
+            }
+        }
+
+        #[cfg(test)]
+        pub fn print_solution(&self) {
+            for nr in &self.last_layer {
+                println!("++++++++++++++++++++++++++++++++++++++++++++");
+                for rr in TreeIterator::new(Rc::clone(&nr)) {
+                    println!("{:?}", rr.value);
+                }
+            }
+        }
     }
 }
 
@@ -193,8 +274,8 @@ mod tests {
     fn test_path() {
         // build area
         let mut area = Area::new();
-        area.conditions.push(|pos| { pos[0] >= 0 && pos[1] >= 0 && pos[2] >= 0 });
-        area.conditions.push(|pos| { pos[0] < 3  && pos[1] < 2  && pos[2] < 2 });
+        area.conditions.push(|pos| { pos.x >= 0 && pos.y >= 0 && pos.z >= 0 });
+        area.conditions.push(|pos| { pos.x < 3  && pos.y < 2  && pos.z < 2 });
 
         // build snake
         let mut chain = Chain::new();
@@ -215,11 +296,11 @@ mod tests {
         // init Path
         let mut path = Path::new(area, chain);
         // add first brick
-        let root_brick = Brick::new([0,0,0], Orientation::North, Form::Straight);
+        let root_brick = Brick::new(Position::new(0, 0, 0), Orientation::North, Form::Straight);
         path.add_brick(&root_brick);
         println!("==================");
         //path.print_layer();
-        path.fold();
+        path.fold(true);
         //assert_eq!(2, path.fold(4));
         println!("==================");
         path.print_solution();
@@ -229,8 +310,8 @@ mod tests {
     fn test_cubesnake_small() {
         // build area
         let mut area = Area::new();
-        area.conditions.push(|pos| { pos[0] >= 0 && pos[1] >= 0 && pos[2] >= 0 });
-        area.conditions.push(|pos| { pos[0] < 3  && pos[1] < 3  && pos[2] < 3 });
+        area.conditions.push(|pos| { pos.x >= 0 && pos.y >= 0 && pos.z >= 0 });
+        area.conditions.push(|pos| { pos.x < 3  && pos.y < 3  && pos.z < 3 });
 
         // build snake
         let mut chain = Chain::new();
@@ -267,13 +348,13 @@ mod tests {
         let mut path = Path::new(area, chain);
 
         // add first bricks
-        path.add_brick(&Brick::new([2,2,2], Orientation::South, Form::Straight));
-        path.add_brick(&Brick::new([1,2,2], Orientation::South, Form::Straight));
-        path.add_brick(&Brick::new([0,2,2], Orientation::Down, Form::Turn));
+        path.add_brick(&Brick::new(Position::new(2, 2, 2), Orientation::South, Form::Straight));
+        path.add_brick(&Brick::new(Position::new(1, 2, 2), Orientation::South, Form::Straight));
+        path.add_brick(&Brick::new(Position::new(0, 2, 2), Orientation::Down, Form::Turn));
 
         println!("==================");
         path.print_layer();
-        assert_eq!(1, path.fold());
+        assert_eq!(1, path.fold(true));
         println!("==================");
         path.print_solution();
         println!("==================");
