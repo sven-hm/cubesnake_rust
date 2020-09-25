@@ -1,0 +1,4 @@
+area cube 3
+chain 27 SSTTTSTTSTTTSTSTTTTSTSTSTSS
+path NE
+start 0 0 0

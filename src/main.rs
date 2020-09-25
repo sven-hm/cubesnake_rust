@@ -4,29 +4,29 @@ mod area;
 mod path;
 mod parser;
 
-use std::rc::Rc;
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::io::Result;
+use std::io::prelude::*;
+use crate::parser::parser::Parser;
 
-use crate::tree::{Node, TreeIterator};
-//use crate::brick::{Chain};
+fn main() -> Result<()> {
+    let args: Vec<String> = env::args().collect();
 
-fn main() {
-    let mut node = Rc::new(Node::<Box<i32>> {
-        father: None,
-        value: Box::new(0)
-    });
+    if args.len() == 3 {
+        let contents: String = fs::read_to_string(&args[1])
+            .expect("Something went wrong reading the file");
 
-    for ii in 1..10 {
-        let child = Rc::new(Node::<Box<i32>> {
-            father: Some(Rc::clone(&node)),
-            value: Box::new(ii)
-        });
+        // read file 
+        let mut prsr = Parser::new(&contents);
 
-        node = Rc::clone(&child);
+        prsr.path.fold();
+
+        File::create(&args[2])?.write_all(prsr.output().as_bytes())?;
+        //println!("{}", prsr.output());
+    } else {
+        println!("usage: cubesnake <in file> <out file>");
     }
-
-    for rr in TreeIterator::new(Rc::clone(&node)) {
-        println!("value = {}", *rr.value);
-    }
-
-    //let _ch = Chain::new();
+    Ok(())
 }
