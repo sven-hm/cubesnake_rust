@@ -4,11 +4,11 @@ pub mod chain {
     #[derive(Copy, Clone, Debug)]
     pub enum Form {
         Straight,
-        Turn
+        Turn,
     }
 
     pub struct Chain {
-        pub dirs: Vec<Form>
+        pub dirs: Vec<Form>,
     }
 
     impl Chain {
@@ -17,7 +17,9 @@ pub mod chain {
         }
 
         pub fn copy(&self) -> Chain {
-            Chain { dirs: self.dirs.to_vec() }
+            Chain {
+                dirs: self.dirs.to_vec(),
+            }
         }
 
         pub fn add(&mut self, form: Form) {
@@ -39,14 +41,14 @@ pub mod chain {
 }
 
 pub mod brick {
-    use std::ops;
     use super::chain::Form;
+    use std::ops;
 
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub struct Position {
         pub x: i8,
         pub y: i8,
-        pub z: i8
+        pub z: i8,
     }
 
     impl ops::Add<Orientation> for Position {
@@ -56,10 +58,10 @@ pub mod brick {
             match rhs {
                 Orientation::North => Position::new(self.x + 1, self.y, self.z),
                 Orientation::South => Position::new(self.x - 1, self.y, self.z),
-                Orientation::East  => Position::new(self.x, self.y + 1, self.z),
-                Orientation::West  => Position::new(self.x, self.y - 1, self.z),
-                Orientation::Up    => Position::new(self.x, self.y, self.z + 1),
-                Orientation::Down  => Position::new(self.x, self.y, self.z - 1),
+                Orientation::East => Position::new(self.x, self.y + 1, self.z),
+                Orientation::West => Position::new(self.x, self.y - 1, self.z),
+                Orientation::Up => Position::new(self.x, self.y, self.z + 1),
+                Orientation::Down => Position::new(self.x, self.y, self.z - 1),
             }
         }
     }
@@ -76,7 +78,7 @@ pub mod brick {
                 self + Orientation::East,
                 self + Orientation::West,
                 self + Orientation::Up,
-                self + Orientation::Down
+                self + Orientation::Down,
             ]
         }
     }
@@ -88,7 +90,7 @@ pub mod brick {
         East,
         West,
         Up,
-        Down
+        Down,
     }
 
     #[derive(Copy, Clone, Debug)]
@@ -103,7 +105,7 @@ pub mod brick {
             Brick {
                 orientation: orient,
                 coordinates: crd,
-                form: frm
+                form: frm,
             }
         }
 
@@ -111,7 +113,7 @@ pub mod brick {
             Brick {
                 orientation: self.orientation.clone(),
                 coordinates: self.coordinates.clone() + self.orientation,
-                form: Form::Straight
+                form: Form::Straight,
             }
         }
 
@@ -119,7 +121,7 @@ pub mod brick {
             Brick {
                 orientation: ori.clone(),
                 coordinates: self.coordinates.clone() + self.orientation,
-                form: Form::Turn
+                form: Form::Turn,
             }
         }
 
@@ -128,37 +130,47 @@ pub mod brick {
             let coord = self.coordinates.clone() + self.orientation;
 
             let (or0, or1, or2, or3) = match self.orientation {
-                Orientation::North | Orientation::South => {
-                    (
-                        Orientation::East,
-                        Orientation::West,
-                        Orientation::Up,
-                        Orientation::Down,
-                    )
-                },
-                Orientation::East | Orientation::West => {
-                    (
-                        Orientation::North,
-                        Orientation::South,
-                        Orientation::Up,
-                        Orientation::Down,
-                    )
-                },
-                Orientation::Up | Orientation::Down => {
-                    (
-                        Orientation::North,
-                        Orientation::South,
-                        Orientation::East,
-                        Orientation::West,
-                    )
-                },
+                Orientation::North | Orientation::South => (
+                    Orientation::East,
+                    Orientation::West,
+                    Orientation::Up,
+                    Orientation::Down,
+                ),
+                Orientation::East | Orientation::West => (
+                    Orientation::North,
+                    Orientation::South,
+                    Orientation::Up,
+                    Orientation::Down,
+                ),
+                Orientation::Up | Orientation::Down => (
+                    Orientation::North,
+                    Orientation::South,
+                    Orientation::East,
+                    Orientation::West,
+                ),
             };
 
             [
-                Brick { orientation: or0, coordinates: coord, form: Form::Turn },
-                Brick { orientation: or1, coordinates: coord, form: Form::Turn },
-                Brick { orientation: or2, coordinates: coord, form: Form::Turn },
-                Brick { orientation: or3, coordinates: coord, form: Form::Turn }
+                Brick {
+                    orientation: or0,
+                    coordinates: coord,
+                    form: Form::Turn,
+                },
+                Brick {
+                    orientation: or1,
+                    coordinates: coord,
+                    form: Form::Turn,
+                },
+                Brick {
+                    orientation: or2,
+                    coordinates: coord,
+                    form: Form::Turn,
+                },
+                Brick {
+                    orientation: or3,
+                    coordinates: coord,
+                    form: Form::Turn,
+                },
             ]
         }
     }
@@ -176,7 +188,6 @@ mod tests {
         cc.add(Form::Straight);
         cc.add(Form::Turn);
         assert_eq!(3, cc.len());
-
     }
 
     #[test]
@@ -186,7 +197,7 @@ mod tests {
         let _brk = Brick::new(Position::new(0, 0, 0), Orientation::East, Form::Straight);
         let _brk = Brick::new(Position::new(0, 0, 0), Orientation::West, Form::Straight);
         let _brk = Brick::new(Position::new(0, 0, 0), Orientation::Up, Form::Straight);
-        let brk  = Brick::new(Position::new(0, 0, 0), Orientation::Down, Form::Straight);
+        let brk = Brick::new(Position::new(0, 0, 0), Orientation::Down, Form::Straight);
         assert_eq!(0, brk.coordinates.x);
     }
 }

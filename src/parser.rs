@@ -1,26 +1,24 @@
 pub mod parser {
-    use std::result::Result::{Ok, Err};
-    use std::vec::Vec;
-    use crate::snake::chain::{Chain, Form};
-    use crate::snake::brick::{Brick, Orientation};
     use crate::area::area::{Area, Position};
-    use crate::path::path::{Path};
+    use crate::path::path::Path;
+    use crate::snake::brick::{Brick, Orientation};
+    use crate::snake::chain::{Chain, Form};
+    use std::result::Result::{Err, Ok};
+    use std::vec::Vec;
 
     fn in_cube3(pos: Position) -> bool {
         let dim = 3;
-        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 &&
-            pos.x < dim  && pos.y < dim  && pos.z < dim
+        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 && pos.x < dim && pos.y < dim && pos.z < dim
     }
 
     fn in_cube4(pos: Position) -> bool {
         let dim = 4;
-        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 &&
-            pos.x < dim  && pos.y < dim  && pos.z < dim
+        pos.x >= 0 && pos.y >= 0 && pos.z >= 0 && pos.x < dim && pos.y < dim && pos.z < dim
     }
 
     pub struct Parser {
         inputstring: String,
-        pub path: Path
+        pub path: Path,
     }
 
     impl Parser {
@@ -44,10 +42,9 @@ pub mod parser {
                         match lv[2].parse().expect("parse error") {
                             3 => area.conditions.push(in_cube3),
                             4 => area.conditions.push(in_cube4),
-                            _ => continue
+                            _ => continue,
                         }
-
-                    },
+                    }
                     "chain" => {
                         // build chain
                         for ff in lv[2].chars() {
@@ -57,7 +54,7 @@ pub mod parser {
                                 _ => {}
                             }
                         }
-                    },
+                    }
                     "path" => {
                         // build paths
                         for ff in lv[1].chars() {
@@ -71,14 +68,14 @@ pub mod parser {
                                 _ => {}
                             }
                         }
-                    },
+                    }
                     "start" => {
                         startbrick = Position {
                             x: lv[1].parse().expect("parser error"),
                             y: lv[2].parse().expect("parser error"),
-                            z: lv[3].parse().expect("parser error")
+                            z: lv[3].parse().expect("parser error"),
                         };
-                    },
+                    }
                     _ => {
                         // ignore for now
                     }
@@ -89,8 +86,8 @@ pub mod parser {
                 // FIXME
                 let lv: Vec<&str> = line.trim_start().split_whitespace().collect();
                 match lv[0].parse::<i8>() {
-                    Ok(_) => {},
-                    Err(_) => continue
+                    Ok(_) => {}
+                    Err(_) => continue,
                 }
 
                 // check for numeric value
@@ -119,24 +116,21 @@ pub mod parser {
 
             for frm in chain2.dirs.iter() {
                 newbrick = match newbrick {
-                    None => {
-                        Some(Brick::new(startbrick, ot.next().unwrap().clone(),
-                            path.chain.get(0).unwrap()))
-                    },
+                    None => Some(Brick::new(
+                        startbrick,
+                        ot.next().unwrap().clone(),
+                        path.chain.get(0).unwrap(),
+                    )),
                     Some(nb) => {
                         match frm {
-                            Form::Straight => {
-                                Some(nb.next_straight())
-                            },
+                            Form::Straight => Some(nb.next_straight()),
                             Form::Turn => {
                                 // XXX
                                 match ot.next() {
                                     None => {
                                         break;
-                                    },
-                                    Some(ori) => {
-                                        Some(nb.next_turn_orientation(ori))
                                     }
+                                    Some(ori) => Some(nb.next_turn_orientation(ori)),
                                 }
                             }
                         }
@@ -144,11 +138,14 @@ pub mod parser {
                 };
                 let brk = match newbrick {
                     None => break,
-                    Some(brk) => brk
+                    Some(brk) => brk,
                 };
                 path.add_brick(&brk);
             }
-            Parser { path: path, inputstring: input.to_string() }
+            Parser {
+                path: path,
+                inputstring: input.to_string(),
+            }
         }
 
         pub fn output(&self) -> String {
@@ -176,7 +173,8 @@ mod tests {
 chain 27 SSTTTSTTSTTTSTSTTTTSTSTSTSS
 path NE
 start 0 0 0
-".to_string();
+"
+        .to_string();
         let mut parser = Parser::new(&input);
         // inspect...
         parser.path.print_solution();

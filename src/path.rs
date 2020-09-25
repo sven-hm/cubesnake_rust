@@ -1,11 +1,11 @@
 pub mod path {
-    use std::vec::Vec;
+    pub use crate::area::area::{Area, Position};
+    pub use crate::snake::brick::{Brick, Orientation};
+    pub use crate::snake::chain::{Chain, Form};
+    use crate::tree::{Node, TreeIterator};
     use std::mem::swap;
     pub use std::rc::Rc;
-    pub use crate::snake::chain::{Chain, Form};
-    pub use crate::snake::brick::{Brick, Orientation};
-    pub use crate::area::area::{Area, Position};
-    use crate::tree::{Node, TreeIterator};
+    use std::vec::Vec;
 
     pub struct Path {
         pub area: Area,
@@ -14,7 +14,7 @@ pub mod path {
         pub last_layer: Vec<Rc<Node<Brick>>>,
         last_layer_index: usize,
 
-        pub statistics: Vec<(usize, usize)>
+        pub statistics: Vec<(usize, usize)>,
     }
 
     impl Path {
@@ -32,12 +32,12 @@ pub mod path {
             if self.last_layer.len() == 0 {
                 self.last_layer.push(Rc::new(Node::<Brick> {
                     father: None,
-                    value: *brick
+                    value: *brick,
                 }));
             } else {
                 self.last_layer[0] = Rc::new(Node::<Brick> {
                     father: Some(Rc::clone(&self.last_layer[0])),
-                    value: *brick
+                    value: *brick,
                 });
             }
 
@@ -55,7 +55,7 @@ pub mod path {
                         if lsize == 0 {
                             break;
                         }
-                    },
+                    }
                     None => {
                         self.statistics.push((ii, 0));
                         break;
@@ -83,8 +83,7 @@ pub mod path {
 
         #[inline]
         fn valid(path: &Path, coords: Position, nr: &Rc<Node<Brick>>) -> bool {
-            path.area.is_in(coords)
-                && !Path::self_intersect(coords, Rc::clone(nr))
+            path.area.is_in(coords) && !Path::self_intersect(coords, Rc::clone(nr))
         }
 
         /*
@@ -103,9 +102,7 @@ pub mod path {
                 None => {
                     return false;
                 }
-                Some(fnb) => {
-                    fnb
-                }
+                Some(fnb) => fnb,
             };
             let mut complement: Vec<Position> = Vec::new();
             Path::build_complement(&mut complement, fnb, path, node);
@@ -120,11 +117,11 @@ pub mod path {
         }
 
         fn build_complement(
-                complement: &mut Vec<Position>,
-                pos: Position,
-                path: &Path,
-                node: &Rc<Node<Brick>>
-                ) -> () {
+            complement: &mut Vec<Position>,
+            pos: Position,
+            path: &Path,
+            node: &Rc<Node<Brick>>,
+        ) -> () {
             if complement.len() > 100 {
                 return;
             }
@@ -140,7 +137,6 @@ pub mod path {
                     Path::build_complement(complement, *nb, path, node);
                 }
             }
-            
         }
 
         /*
@@ -163,21 +159,19 @@ pub mod path {
                     Form::Straight => {
                         let new_brick = (*nr).value.next_straight();
                         if Path::valid_nosplit(self, new_brick.coordinates, nr) {
-                            new_layer.push(Rc::new(
-                                    Node::<Brick> {
-                                        father: Some(Rc::clone(nr)),
-                                        value: new_brick
-                                    }));
+                            new_layer.push(Rc::new(Node::<Brick> {
+                                father: Some(Rc::clone(nr)),
+                                value: new_brick,
+                            }));
                         }
-                    },
+                    }
                     Form::Turn => {
                         for new_brick in &(*nr).value.next_turn() {
                             if Path::valid_nosplit(self, new_brick.coordinates, nr) {
-                                new_layer.push(Rc::new(
-                                        Node::<Brick> {
-                                            father: Some(Rc::clone(nr)),
-                                            value: *new_brick
-                                        }));
+                                new_layer.push(Rc::new(Node::<Brick> {
+                                    father: Some(Rc::clone(nr)),
+                                    value: *new_brick,
+                                }));
                             }
                         }
                     }
@@ -199,23 +193,22 @@ pub mod path {
             let mut output = "coords   form orientation\n".to_string();
             for nr in &self.last_layer {
                 for rr in TreeIterator::new(Rc::clone(&nr)) {
-                    let mut line = format!("[{}, {}, {}]  ",
-                        rr.value.coordinates.x,
-                        rr.value.coordinates.y,
-                        rr.value.coordinates.z,
-                        );
+                    let mut line = format!(
+                        "[{}, {}, {}]  ",
+                        rr.value.coordinates.x, rr.value.coordinates.y, rr.value.coordinates.z,
+                    );
                     line.push_str(match rr.value.form {
                         Form::Straight => "S",
-                        Form::Turn => "T"
+                        Form::Turn => "T",
                     });
                     line.push_str("  ");
                     line.push_str(match rr.value.orientation {
                         Orientation::North => "N",
                         Orientation::South => "S",
-                        Orientation::East  => "E",
-                        Orientation::West  => "W",
-                        Orientation::Up    => "U",
-                        Orientation::Down  => "D",
+                        Orientation::East => "E",
+                        Orientation::West => "W",
+                        Orientation::Up => "U",
+                        Orientation::Down => "D",
                     });
                     line.push_str("\n");
                     output.push_str(&line);
@@ -230,16 +223,16 @@ pub mod path {
             for nr in &self.last_layer {
                 let mut last_orientation: Option<Orientation> = None;
                 for rr in TreeIterator::new(Rc::clone(&nr)) {
-
-                    if last_orientation.is_none() ||
-                            last_orientation.unwrap() != rr.value.orientation {
+                    if last_orientation.is_none()
+                        || last_orientation.unwrap() != rr.value.orientation
+                    {
                         output.push_str(match rr.value.orientation {
                             Orientation::North => "N",
                             Orientation::South => "S",
-                            Orientation::East  => "E",
-                            Orientation::West  => "W",
-                            Orientation::Up    => "U",
-                            Orientation::Down  => "D",
+                            Orientation::East => "E",
+                            Orientation::West => "W",
+                            Orientation::Up => "U",
+                            Orientation::Down => "D",
                         });
                         output.push_str("\n")
                     }
@@ -285,8 +278,10 @@ mod tests {
     fn test_path() {
         // build area
         let mut area = Area::new();
-        area.conditions.push(|pos| { pos.x >= 0 && pos.y >= 0 && pos.z >= 0 });
-        area.conditions.push(|pos| { pos.x < 3  && pos.y < 2  && pos.z < 2 });
+        area.conditions
+            .push(|pos| pos.x >= 0 && pos.y >= 0 && pos.z >= 0);
+        area.conditions
+            .push(|pos| pos.x < 3 && pos.y < 2 && pos.z < 2);
 
         // build snake
         let mut chain = Chain::new();
@@ -321,8 +316,10 @@ mod tests {
     fn test_cubesnake_small() {
         // build area
         let mut area = Area::new();
-        area.conditions.push(|pos| { pos.x >= 0 && pos.y >= 0 && pos.z >= 0 });
-        area.conditions.push(|pos| { pos.x < 3  && pos.y < 3  && pos.z < 3 });
+        area.conditions
+            .push(|pos| pos.x >= 0 && pos.y >= 0 && pos.z >= 0);
+        area.conditions
+            .push(|pos| pos.x < 3 && pos.y < 3 && pos.z < 3);
 
         // build snake
         let mut chain = Chain::new();
@@ -359,9 +356,21 @@ mod tests {
         let mut path = Path::new(area, chain);
 
         // add first bricks
-        path.add_brick(&Brick::new(Position::new(2, 2, 2), Orientation::South, Form::Straight));
-        path.add_brick(&Brick::new(Position::new(1, 2, 2), Orientation::South, Form::Straight));
-        path.add_brick(&Brick::new(Position::new(0, 2, 2), Orientation::Down, Form::Turn));
+        path.add_brick(&Brick::new(
+            Position::new(2, 2, 2),
+            Orientation::South,
+            Form::Straight,
+        ));
+        path.add_brick(&Brick::new(
+            Position::new(1, 2, 2),
+            Orientation::South,
+            Form::Straight,
+        ));
+        path.add_brick(&Brick::new(
+            Position::new(0, 2, 2),
+            Orientation::Down,
+            Form::Turn,
+        ));
 
         println!("==================");
         path.print_layer();

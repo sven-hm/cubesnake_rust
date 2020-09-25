@@ -2,11 +2,11 @@ use std::rc::Rc;
 
 pub struct Node<T> {
     pub father: Option<Rc<Node<T>>>,
-    pub value: T
+    pub value: T,
 }
 
 pub struct TreeIterator<T> {
-    curr: Option<Rc<Node<T>>>
+    curr: Option<Rc<Node<T>>>,
 }
 
 impl<T> Iterator for TreeIterator<T> {
@@ -16,7 +16,7 @@ impl<T> Iterator for TreeIterator<T> {
         // set return value
         let retval = match &self.curr {
             None => None,
-            Some(cc) => Some(Rc::clone(&cc))
+            Some(cc) => Some(Rc::clone(&cc)),
         };
 
         // update current value
@@ -24,8 +24,8 @@ impl<T> Iterator for TreeIterator<T> {
             None => None,
             Some(cc) => match &cc.father {
                 None => None,
-                Some(ff) => Some(Rc::clone(&ff))
-            }
+                Some(ff) => Some(Rc::clone(&ff)),
+            },
         };
 
         retval
@@ -35,7 +35,7 @@ impl<T> Iterator for TreeIterator<T> {
 impl<T> TreeIterator<T> {
     pub fn new(startnode: Rc<Node<T>>) -> TreeIterator<T> {
         TreeIterator::<T> {
-            curr: Some(Rc::clone(&startnode))
+            curr: Some(Rc::clone(&startnode)),
         }
     }
 }
@@ -46,14 +46,34 @@ mod tests {
 
     #[test]
     fn test_int_tree() {
-
-        let a = Rc::new(Node::<i32> { father: None, value: 0});
-        let b = Rc::new(Node::<i32> { father: Some(Rc::clone(&a)), value: 1});
-        let c = Rc::new(Node::<i32> { father: Some(Rc::clone(&a)), value: 2});
-        let d = Rc::new(Node::<i32> { father: Some(Rc::clone(&b)), value: 3});
-        let e = Rc::new(Node::<i32> { father: Some(Rc::clone(&c)), value: 4});
-        let f = Rc::new(Node::<i32> { father: Some(Rc::clone(&c)), value: 5});
-        let g = Rc::new(Node::<i32> { father: Some(Rc::clone(&f)), value: 6});
+        let a = Rc::new(Node::<i32> {
+            father: None,
+            value: 0,
+        });
+        let b = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&a)),
+            value: 1,
+        });
+        let c = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&a)),
+            value: 2,
+        });
+        let d = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&b)),
+            value: 3,
+        });
+        let e = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&c)),
+            value: 4,
+        });
+        let f = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&c)),
+            value: 5,
+        });
+        let g = Rc::new(Node::<i32> {
+            father: Some(Rc::clone(&f)),
+            value: 6,
+        });
 
         let mut r = TreeIterator::new(Rc::clone(&g));
         assert_eq!(r.next().unwrap().value, 6);
@@ -76,11 +96,11 @@ mod tests {
     fn test_string_tree() {
         let a = Rc::new(Node::<String> {
             father: None,
-            value: "a".to_string()
+            value: "a".to_string(),
         });
         let b = Rc::new(Node::<String> {
             father: Some(Rc::clone(&a)),
-            value: "b".to_string()
+            value: "b".to_string(),
         });
 
         let mut r = TreeIterator::new(Rc::clone(&b));
@@ -90,16 +110,15 @@ mod tests {
 
     #[test]
     fn test_box_tree() {
-
         let mut node = Rc::new(Node::<Box<i32>> {
             father: None,
-            value: Box::new(0)
+            value: Box::new(0),
         });
 
         for ii in 1..10 {
             let child = Rc::new(Node::<Box<i32>> {
                 father: Some(Rc::clone(&node)),
-                value: Box::new(ii)
+                value: Box::new(ii),
             });
 
             node = Rc::clone(&child);
