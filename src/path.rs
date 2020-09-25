@@ -52,6 +52,9 @@ pub mod path {
                     Some(frm) => {
                         lsize = self.build_next_layer(frm);
                         self.statistics.push((ii, lsize));
+                        if lsize == 0 {
+                            break;
+                        }
                     },
                     None => {
                         self.statistics.push((ii, 0));
@@ -179,6 +182,9 @@ pub mod path {
                         }
                     }
                 }
+            }
+            if new_layer.len() == 0 {
+                return 0;
             }
             swap(&mut self.last_layer, &mut new_layer);
             self.last_layer_index += 1;
