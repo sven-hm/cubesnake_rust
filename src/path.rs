@@ -88,11 +88,11 @@ impl Path {
     /*
      * checks if area is splitted by new position
      */
-    fn split_area(path: &Path, coords: Position, node: &Rc<Node<Brick>>) -> bool {
+    fn split_area(&self, coords: Position, node: &Rc<Node<Brick>>) -> bool {
         // pick first valid neighbour
         let mut fnb: Option<Position> = None;
         for nb in &coords.neighbours() {
-            if Path::valid(path, *nb, node) {
+            if Path::valid(self, *nb, node) {
                 fnb = Some(*nb);
                 break;
             }
@@ -104,15 +104,8 @@ impl Path {
             Some(fnb) => fnb,
         };
         let mut complement: Vec<Position> = Vec::new();
-        Path::build_complement(&mut complement, fnb, path, node);
-        //println!("---------------");
-        //println!("chain len:      {}", path.chain.dirs.len());
-        //println!("layer index:    {}", path.last_layer_index);
-        //println!("complement len: {}", complement.len());
-        //println!("---------------");
-        //println!("{} > {}", path.chain.dirs.len() - (path.last_layer_index + 2), complement.len());
-        path.chain.dirs.len() - path.last_layer_index > complement.len()
-        //false
+        Path::build_complement(&mut complement, fnb, self, node);
+        self.chain.dirs.len() - self.last_layer_index > complement.len()
     }
 
     fn build_complement(
@@ -138,14 +131,10 @@ impl Path {
         }
     }
 
-    /*
-     * FIXME: can't i use self here?
-     */
-    #[inline]
-    fn valid_nosplit(path: &Path, coords: Position, nr: &Rc<Node<Brick>>) -> bool {
-        path.area.is_in(coords)
+    fn valid_nosplit(&self, coords: Position, nr: &Rc<Node<Brick>>) -> bool {
+        self.area.is_in(coords)
             && !Path::self_intersect(coords, Rc::clone(nr))
-            && !Path::split_area(path, coords, nr)
+            && !self.split_area(coords, nr)
     }
 
     fn build_next_layer(&mut self, frm: Form) -> usize {
@@ -157,7 +146,7 @@ impl Path {
             match frm {
                 Form::Straight => {
                     let new_brick = (*nr).value.next_straight();
-                    if Path::valid_nosplit(self, new_brick.coordinates, nr) {
+                    if self.valid_nosplit(new_brick.coordinates, nr) {
                         new_layer.push(Rc::new(Node::<Brick> {
                             father: Some(Rc::clone(nr)),
                             value: new_brick,
@@ -166,7 +155,7 @@ impl Path {
                 }
                 Form::Turn => {
                     for new_brick in &(*nr).value.next_turn() {
-                        if Path::valid_nosplit(self, new_brick.coordinates, nr) {
+                        if self.valid_nosplit(new_brick.coordinates, nr) {
                             new_layer.push(Rc::new(Node::<Brick> {
                                 father: Some(Rc::clone(nr)),
                                 value: *new_brick,
@@ -222,9 +211,7 @@ impl Path {
         for nr in &self.last_layer {
             let mut last_orientation: Option<Orientation> = None;
             for rr in TreeIterator::new(Rc::clone(&nr)) {
-                if last_orientation.is_none()
-                    || last_orientation.unwrap() != rr.value.orientation
-                {
+                if last_orientation.is_none() || last_orientation.unwrap() != rr.value.orientation {
                     output.push_str(match rr.value.orientation {
                         Orientation::North => "N",
                         Orientation::South => "S",
