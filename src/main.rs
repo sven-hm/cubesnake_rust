@@ -4,7 +4,7 @@ mod path;
 mod snake;
 mod tree;
 
-use crate::parser::parser::Parser;
+use crate::parser::Parser;
 use std::env;
 use std::fs;
 use std::fs::File;

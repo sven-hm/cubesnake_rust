@@ -32,7 +32,7 @@ pub mod chain {
 
         pub fn get(&self, index: usize) -> Option<Form> {
             if index < self.dirs.len() {
-                Some(self.dirs[index].clone())
+                Some(self.dirs[index])
             } else {
                 None
             }
@@ -54,6 +54,7 @@ pub mod brick {
     impl ops::Add<Orientation> for Position {
         type Output = Position;
 
+        #[allow(clippy::suspicious_arithmetic_impl)]
         fn add(self, rhs: Orientation) -> Position {
             match rhs {
                 Orientation::North => Position::new(self.x + 1, self.y, self.z),
@@ -68,7 +69,7 @@ pub mod brick {
 
     impl Position {
         pub fn new(x: i8, y: i8, z: i8) -> Position {
-            Position { x: x, y: y, z: z }
+            Position { x, y, z }
         }
 
         pub fn neighbours(self) -> [Position; 6] {
@@ -111,23 +112,23 @@ pub mod brick {
 
         pub fn next_straight(&self) -> Brick {
             Brick {
-                orientation: self.orientation.clone(),
-                coordinates: self.coordinates.clone() + self.orientation,
+                orientation: self.orientation,
+                coordinates: self.coordinates + self.orientation,
                 form: Form::Straight,
             }
         }
 
         pub fn next_turn_orientation(&self, ori: &Orientation) -> Brick {
             Brick {
-                orientation: ori.clone(),
-                coordinates: self.coordinates.clone() + self.orientation,
+                orientation: *ori,
+                coordinates: self.coordinates + self.orientation,
                 form: Form::Turn,
             }
         }
 
         pub fn next_turn(&self) -> [Brick; 4] {
             // FIXME: use next_turn_orientation in here!
-            let coord = self.coordinates.clone() + self.orientation;
+            let coord = self.coordinates + self.orientation;
 
             let (or0, or1, or2, or3) = match self.orientation {
                 Orientation::North | Orientation::South => (
