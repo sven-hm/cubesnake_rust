@@ -141,26 +141,20 @@ impl Path {
         let mut new_layer: Vec<Rc<Node<Brick>>> = Vec::new();
 
         // iterate on last_layer
-        // XXX DRY :/
         for nr in &self.last_layer {
-            match frm {
-                Form::Straight => {
-                    let new_brick = (*nr).value.next_straight();
-                    if self.valid_nosplit(new_brick.coordinates, nr) {
-                        new_layer.push(Rc::new(Node::<Brick> {
-                            father: Some(Rc::clone(nr)),
-                            value: new_brick,
-                        }));
-                    }
+            let mut process_brick = |brk: &Brick| {
+                if self.valid_nosplit(brk.coordinates, nr) {
+                    new_layer.push(Rc::new(Node::<Brick> {
+                        father: Some(Rc::clone(nr)),
+                        value: *brk,
+                    }));
                 }
+            };
+            match frm {
+                Form::Straight => process_brick(&(*nr).value.next_straight()),
                 Form::Turn => {
                     for new_brick in &(*nr).value.next_turn() {
-                        if self.valid_nosplit(new_brick.coordinates, nr) {
-                            new_layer.push(Rc::new(Node::<Brick> {
-                                father: Some(Rc::clone(nr)),
-                                value: *new_brick,
-                            }));
-                        }
+                        process_brick(new_brick);
                     }
                 }
             }
@@ -170,9 +164,6 @@ impl Path {
         }
         swap(&mut self.last_layer, &mut new_layer);
         self.last_layer_index += 1;
-
-        //println!("==================");
-        //self.print_layer();
 
         self.last_layer.len()
     }
